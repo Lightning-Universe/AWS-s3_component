@@ -1,68 +1,134 @@
+import botocore.exceptions
 import lightning as L
-import boto3.session
+from lightning.storage.payload import Payload
+import boto3
+import logging
+from typing import final, Union, Optional
+
 
 class S3(L.LightningWork):
 
     def __init__(
             self,
             aws_access_key_id,
-            aws_secret_access_Key,
+            aws_secret_access_key,
             *args, **kwargs
     ):
         super().__init__(self, *args, **kwargs)
 
-        # Metadata cache to keep track of what's been downloaded and where
-        # Key/Value pair of Remote s3 bucket uri / lightning storage path
-        self.metadata = {}
+        self.data = {} # Bucket name / bucket contents
         self.aws_access_key_id = aws_access_key_id
-        self.aws_secret_access_Key = aws_secret_access_Key
+        self.aws_secret_access_key = aws_secret_access_key
+        self.verify_credentials()
+
+    def verify_credentials(self):
+
+        if sum([
+                self.aws_access_key_id is None,
+                self.aws_secret_access_key is None
+        ]) == 1:
+            missing_key = 'aws_access_key_id' if self.aws_secret_access_key \
+                else 'aws_secret_access_key'
+            raise PermissionError(
+                "If either the aws_access_key_id or aws_secret_access_key is"
+                " provided then both are required."
+                f" Missing value for {missing_key}"
+            )
+
+        elif not self.aws_access_key_id and not self.aws_secret_access_key:
+            logging.info("Using default credentials from .aws")
+
+        # Verify that the access key pairs are valid
+        try:
+            self._session.client("sts").get_caller_identity()
+        except botocore.exceptions.ClientError as error:
+            logging.error(error)
+
 
     @property
-    def session(self):
+    def _session(self):
         return boto3.session.Session(
             aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_Key
+            aws_secret_access_key=self.aws_secret_access_key
         )
 
-    def ls(self, bucket, *args, **kwargs) -> None:
-        self.run(bucket, action="ls", *args, **kwargs)
+    @property
+    def resource(self):
+        return self._session.resource("s3")
 
-    def _ls(self, bucket) -> None:
-        s3 = self.session.resource('s3')
-        print(s3.Bucket(bucket).objects.all())
+    def get_filelist(self, bucket, *args, **kwargs) -> None:
+        self.run(action="get_filelist", bucket=bucket, *args, **kwargs)
 
-    def download(self):
-        self.run(action="download")
+    @final
+    def _get_filelist(self, bucket) -> None:
 
-    def _download(self):
-        pass
+        # Check that the bucket exists, if not raise a warning
+        content = [
+            _obj.key for _obj in self.resource.Bucket(bucket).objects.all()
+        ]
+        self.data = {**{bucket: content}, **self.data}
 
-    def upload(self):
-        self.run(action="upload")
+    def download_file(
+            self,
+            bucket: str,
+            object: str,
+            filename: Union[L.storage.Path, str],
+            *args,
+            **kwargs
+    ) -> None:
 
-    def _upload(self):
-        pass
+        self.run(
+            action="download_file",
+            bucket=bucket,
+            object=object,
+            filename=filename,
+            *args,
+            **kwargs
+        )
 
-    def create_bucket(self):
-        self.run(action="create_bucket")
+    @final
+    def _download_file(
+         self, bucket: str, object: str, filename: Union[L.storage.Path, str]
+    ):
+        with open(filename, "wb") as _file:
+            self.resource.meta.client.download_fileobj(
+                Bucket=bucket, Key=object, Fileobj=_file
+            )
 
-    def _create_bucket(self):
-        pass
+    def upload_file(
+            self,
+            bucket: str,
+            filename: Union[L.storage.Path, str],
+            object: Optional[str] = None,
+            *args,
+            **kwargs
+    ):
+        self.run(
+            action="upload_file",
+            bucket=bucket,
+            object=object,
+            filename=filename,
+            *args,
+            **kwargs
+        )
 
-    def list_bucket(self):
-        self.run(action="list_bucket")
-
-    def _list_bucket(self):
-        pass
+    @final
+    def _upload_file(
+            self,
+            bucket: str,
+            object: str,
+            filename: Union[L.storage.Path, str]
+    ):
+        with open(filename, 'rb') as _f:
+            self.resource.meta.client.upload_fileobj(
+                Fileobj=_f, Bucket=bucket, Key=object
+            )
 
     def run(self, action, *args, **kwargs):
-        if action == "ls":
-            self._ls(*args, **kwargs)
-        elif action == "download":
-            self._download(*args, **kwargs)
-        elif action == "upload":
-            self._upload(*args, **kwargs)
-        elif action == "create_bucket":
-            self._create_bucket(*args, **kwargs)
-        elif action == "list_buckets":
-            self._list_buckets(*args, **kwargs)
+
+        if action == "get_filelist":
+            self._get_filelist(*args, **kwargs)
+        elif action == "download_file":
+            self._download_file(*args, **kwargs)
+        elif action == "upload_file":
+            self._upload_file(*args, **kwargs)
