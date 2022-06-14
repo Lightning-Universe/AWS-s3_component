@@ -136,11 +136,18 @@ class S3(L.LightningWork):
         elif action == "upload_file":
             self._upload_file(*args, **kwargs)
 
+    def get_s3_items(self, idx):
+        filepath = self.data[idx]
+        img = Image.open(io.BytesIO(img)).convert('RGB')
+        # Apply preprocessing functions on data
+        if self.transform is not None:
+             img = self.transform(img)
+        return img
+
     def create_dataset(
         self,
         transform,
-        get_s3_items=self.get_s3_items,
-        len_s3_bucket=self.len_s3_bucket
+        get_s3_items=self.get_s3_items
     ):
         class S3Dataset(Dataset):
             def __init__(bucket, transform=None, resource=None):
@@ -157,11 +164,6 @@ class S3(L.LightningWork):
 
 
             def __getitem__(self, idx):
-                filepath = self.data[idx]
-                img = Image.open(io.BytesIO(img)).convert('RGB')
-                # Apply preprocessing functions on data
-                if self.transform is not None:
-                    img = self.transform(img)
-                return img
+                return get_s3_items(idx)
         
         return S3Dataset(Dataset, transform, self.resource)  
