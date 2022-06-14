@@ -136,7 +136,7 @@ class S3(L.LightningWork):
         elif action == "upload_file":
             self._upload_file(*args, **kwargs)
 
-    def get_s3_items(self):
+    def get_s3_items(self, idx):
         obj = self.resource.Bucket(self.bucket).objects.all()
         img_name, img = obj[idx]
         # Convert bytes object to image
@@ -175,7 +175,7 @@ class S3(L.LightningWork):
 
 
             def __getitem__(self, idx):
-                return get_s3_bucket()
+                return get_s3_bucket(idx)
 
         
         return S3Dataset(Dataset, transform, self.resource)  
