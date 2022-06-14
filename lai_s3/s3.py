@@ -6,7 +6,7 @@ import logging
 from typing import final, Union, Optional
 from torch.utils.data import Dataset, DataLoader
 import io
-from pil import Image
+from PIL import Image
 
 
 class S3(L.LightningWork):
@@ -147,7 +147,7 @@ class S3(L.LightningWork):
     def create_dataset(
         self,
         transform,
-        get_s3_items=self.get_s3_items
+        get_s3_items=get_s3_items
     ):
         class S3Dataset(Dataset):
             def __init__(bucket, transform=None, resource=None):
@@ -161,7 +161,6 @@ class S3(L.LightningWork):
 
             def __len__(self):
                 return len(self.data)
-
 
             def __getitem__(self, idx):
                 return get_s3_items(idx)
