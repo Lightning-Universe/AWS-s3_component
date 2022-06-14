@@ -4,6 +4,8 @@ from lightning.storage.payload import Payload
 import boto3
 import logging
 from typing import final, Union, Optional
+from torch.utils.data mport Dataset, DataLoader
+import io
 
 
 class S3(L.LightningWork):
@@ -132,3 +134,47 @@ class S3(L.LightningWork):
             self._download_file(*args, **kwargs)
         elif action == "upload_file":
             self._upload_file(*args, **kwargs)
+
+    def get_s3_items(self):
+        obj = self.resource.Bucket(self.bucket).objects.all()
+        img_name, img = obj[idx]
+        # Convert bytes object to image
+        img = Image.open(io.BytesIO(img)).convert('RGB')
+
+        # Apply preprocessing functions on data
+        if self.transform is not None:
+            img = self.transform(img)
+        return img
+    
+    def len_s3_bucket(self):
+        """
+        Expensive for buckets with a large number of files.
+        """
+        obj = self.resource.Bucket(self.bucket).objects.all()
+        num_lines = 0
+        for _ in obj:
+            num_lines += 1
+
+        return num_lines
+
+
+    def create_dataset(
+        self,
+        transform,
+        get_s3_items=self.get_s3_items,
+        len_s3_bucket=self.len_s3_bucket
+    ):
+        class S3Dataset(Dataset):
+            def __init__(bucket, transform=None, resource=None):
+                self.bucket = bucket
+                self.resource = resource
+
+            def __len__(self):
+                return len_s3_bucket()
+
+
+            def __getitem__(self, idx):
+                return get_s3_bucket()
+
+        
+        return S3Dataset(Dataset, transform, self.resource)  
