@@ -169,6 +169,7 @@ class S3(L.LightningWork):
             def __init__(bucket, transform=None, resource=None):
                 self.bucket = bucket
                 self.resource = resource
+                self.transform = transform
 
             def __len__(self):
                 return len_s3_bucket()
