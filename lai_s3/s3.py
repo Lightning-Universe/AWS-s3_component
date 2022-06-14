@@ -4,7 +4,7 @@ from lightning.storage.payload import Payload
 import boto3
 import logging
 from typing import final, Union, Optional
-from torch.utils.data mport Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader
 import io
 from pil import Image
 
@@ -165,5 +165,5 @@ class S3(L.LightningWork):
 
             def __getitem__(self, idx):
                 return get_s3_items(idx)
-        
-        return S3Dataset(Dataset, transform, self.resource)  
+
+        return S3Dataset(Dataset, transform, self.resource)
