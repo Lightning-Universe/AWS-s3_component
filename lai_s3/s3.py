@@ -136,29 +136,6 @@ class S3(L.LightningWork):
         elif action == "upload_file":
             self._upload_file(*args, **kwargs)
 
-    def get_s3_items(self, idx):
-        obj = self.resource.Bucket(self.bucket).objects.all()
-        img_name, img = obj[idx]
-        # Convert bytes object to image
-        img = Image.open(io.BytesIO(img)).convert('RGB')
-
-        # Apply preprocessing functions on data
-        if self.transform is not None:
-            img = self.transform(img)
-        return img
-    
-    def len_s3_bucket(self):
-        """
-        Expensive for buckets with a large number of files.
-        """
-        obj = self.resource.Bucket(self.bucket).objects.all()
-        num_lines = 0
-        for _ in obj:
-            num_lines += 1
-
-        return num_lines
-
-
     def create_dataset(
         self,
         transform,
@@ -170,13 +147,21 @@ class S3(L.LightningWork):
                 self.bucket = bucket
                 self.resource = resource
                 self.transform = transform
+                # Check that the bucket exists, if not raise a warning
+                self.data = [
+                    _obj.key for _obj in self.resource.Bucket(bucket).objects.all()
+                ]
 
             def __len__(self):
-                return len_s3_bucket()
+                return len(self.data)
 
 
             def __getitem__(self, idx):
-                return get_s3_bucket(idx)
-
+                filepath = self.data[idx]
+                img = Image.open(io.BytesIO(img)).convert('RGB')
+                # Apply preprocessing functions on data
+                if self.transform is not None:
+                    img = self.transform(img)
+                return img
         
         return S3Dataset(Dataset, transform, self.resource)  
