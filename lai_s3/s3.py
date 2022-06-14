@@ -5,7 +5,6 @@ import boto3
 import logging
 from typing import final, Union, Optional
 from torch.utils.data import Dataset, DataLoader
-import io
 from PIL import Image
 
 
@@ -140,9 +139,9 @@ class S3(L.LightningWork):
         elif action == "upload_file":
             self._upload_file(*args, **kwargs)
 
-    def get_s3_items(self, idx):
-        filepath = self.data[idx]
-        img = Image.open(io.BytesIO(img)).convert('RGB')
+    def get_s3_items(data, idx):
+        filepath = data[idx]
+        img = Image.open(filepath).convert('RGB')
         # Apply preprocessing functions on data
         if self.transform is not None:
              img = self.transform(img)
@@ -167,6 +166,6 @@ class S3(L.LightningWork):
                 return len(self.data)
 
             def __getitem__(self, idx):
-                return get_s3_items(idx)
+                return get_s3_items(self.data, idx)
 
         return S3Dataset(bucket, transform)
