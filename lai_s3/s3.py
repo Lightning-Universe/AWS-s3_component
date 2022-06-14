@@ -13,32 +13,35 @@ class S3(L.LightningWork):
 
     def __init__(
             self,
-            aws_access_key_id,
-            aws_secret_access_key,
+            aws_access_key_id=None,
+            aws_secret_access_key=None,
+            aws_session_token=None,
             *args, **kwargs
     ):
         super().__init__(self, *args, **kwargs)
 
         self.data = {} # Bucket name / bucket contents
-        self.aws_access_key_id = aws_access_key_id
-        self.aws_secret_access_key = aws_secret_access_key
+        self.credentials = {
+            'aws_access_key_id': aws_access_key_id,
+            'aws_secret_access_key': aws_secret_access_key,
+            'aws_session_token': aws_session_token
+        }
         self.verify_credentials()
 
     def verify_credentials(self):
-
-        if sum([
-                self.aws_access_key_id is None,
-                self.aws_secret_access_key is None
-        ]) == 1:
-            missing_key = 'aws_access_key_id' if self.aws_secret_access_key \
-                else 'aws_secret_access_key'
+        missing_creds = []
+        for cred in self.credentials:
+            if self.credentials[cred] is None:
+                missing_creds += self.credentials[cred]
+        
+        if missing_creds:
             raise PermissionError(
-                "If either the aws_access_key_id or aws_secret_access_key is"
-                " provided then both are required."
-                f" Missing value for {missing_key}"
+                "If either the aws_access_key_id, aws_secret_access_key, or aws_session_token is"
+                " provided then all credential fields are required."
+                f" Missing value for {missing_creds}"
             )
 
-        elif not self.aws_access_key_id and not self.aws_secret_access_key:
+        elif not self.credentials['aws_access_key_id'] and not self.credentials['aws_secret_access_key']:
             logging.info("Using default credentials from .aws")
 
         # Verify that the access key pairs are valid
@@ -51,8 +54,9 @@ class S3(L.LightningWork):
     @property
     def _session(self):
         return boto3.session.Session(
-            aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_key
+            aws_access_key_id=self.credentials['aws_access_key_id'],
+            aws_secret_access_key=self.credentials['aws_secret_access_key'],
+            aws_session_token=self.credentials['aws_session_token']
         )
 
     @property
@@ -146,17 +150,17 @@ class S3(L.LightningWork):
 
     def create_dataset(
         self,
-        transform,
+        bucket,
+        transform=None,
         get_s3_items=get_s3_items
     ):
+        resource=self.resource
         class S3Dataset(Dataset):
-            def __init__(bucket, transform=None, resource=None):
-                self.bucket = bucket
-                self.resource = resource
+            def __init__(self, bucket, transform=None):
                 self.transform = transform
                 # Check that the bucket exists, if not raise a warning
                 self.data = [
-                    _obj.key for _obj in self.resource.Bucket(bucket).objects.all()
+                    _obj.key for _obj in resource.Bucket(bucket).objects.all()
                 ]
 
             def __len__(self):
@@ -165,4 +169,4 @@ class S3(L.LightningWork):
             def __getitem__(self, idx):
                 return get_s3_items(idx)
 
-        return S3Dataset(Dataset, transform, self.resource)
+        return S3Dataset(bucket, transform)
