@@ -140,7 +140,7 @@ class S3(L.LightningWork):
         elif action == "upload_file":
             self._upload_file(*args, **kwargs)
 
-    def get_s3_items(data, idx, transform):
+    def get_s3_items(data, idx, transforms):
         obj = data[idx]
         label = obj.key.split('/')[-2]
         img_bytes = obj.get()['Body'].read()
@@ -153,13 +153,13 @@ class S3(L.LightningWork):
     def create_dataset(
         self,
         bucket,
-        transform=None,
+        transforms=None,
         get_s3_items=get_s3_items,
         split='train'
     ):
         resource=self.resource
         class S3Dataset(Dataset):
-            def __init__(self, bucket, transform=None, split=split):
+            def __init__(self, bucket, transforms=None, split=split):
                 self.transform = transform
                 # Check that the bucket exists, if not raise a warning
                 self.data = [obj for obj in resource.Bucket(bucket).objects.all() if obj.key.split('/')[1].lower() == split.lower()]
