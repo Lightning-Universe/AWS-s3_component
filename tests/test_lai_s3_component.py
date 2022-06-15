@@ -18,8 +18,9 @@ from lai_s3.s3 import S3
 
 class MockSession:
 
-    def __init__(self, service):
-        self.service = service
+    def __init__(self, aws_access_key_id, aws_secret_access_key):
+        self.aws_secret_access_key = aws_secret_access_key
+        self.aws_secret_access_key = aws_secret_access_key
 
     def client(self, service):
         return MockClient(service)
@@ -105,7 +106,7 @@ class MockS3(S3):
 
     def run(self, *args, **kwargs):
         with patch.object(
-            boto3.session, "Session", return_value=MockSession("sts")
+            boto3.session, "Session", return_value=MockSession("_id", "_key")
         ) as _, \
         patch.object(
             boto3.session.Session, "client", return_value=MockClient("sts")
