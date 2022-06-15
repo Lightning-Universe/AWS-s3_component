@@ -162,7 +162,7 @@ class S3(L.LightningWork):
                 self.transform = transform
                 # Check that the bucket exists, if not raise a warning
                 self.data = []
-                [obj for obj in resource.Bucket(bucket).all() if obj.key()[-2].lower() == split.lower()]
+                [obj for obj in resource.Bucket(bucket).all() if obj.key()[-2].split('/').lower() == split.lower()]
 
             def __len__(self):
                 return len(self.data)
