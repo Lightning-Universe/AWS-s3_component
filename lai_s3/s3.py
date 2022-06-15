@@ -154,11 +154,12 @@ class S3(L.LightningWork):
         self,
         bucket,
         transform=None,
-        get_s3_items=get_s3_items
+        get_s3_items=get_s3_items,
+        split='train'
     ):
         resource=self.resource
         class S3Dataset(Dataset):
-            def __init__(self, bucket, transform=None, split='train'):
+            def __init__(self, bucket, transform=None, split=split):
                 self.transform = transform
                 # Check that the bucket exists, if not raise a warning
                 self.data = [obj for obj in resource.Bucket(bucket).objects.all() if obj.key.split('/')[1].lower() == split.lower()]
