@@ -147,7 +147,7 @@ class S3(L.LightningWork):
         img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
         # Apply preprocessing functions on data
         if transforms is not None:
-             img = self.transforms(img)
+             img = transforms(img)
         return img, label
 
     def create_dataset(
