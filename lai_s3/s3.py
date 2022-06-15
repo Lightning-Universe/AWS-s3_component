@@ -7,6 +7,7 @@ from typing import final, Union, Optional
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import io
+import json
 
 
 class S3(L.LightningWork):
@@ -140,14 +141,16 @@ class S3(L.LightningWork):
         elif action == "upload_file":
             self._upload_file(*args, **kwargs)
 
-    def get_s3_items(data, idx, transforms):
+    def get_s3_items(data, idx, transforms, label_map):
         obj = data[idx]
         label = obj.key.split('/')[-2]
+        label = label_map[label]
         img_bytes = obj.get()['Body'].read()
         img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
         # Apply preprocessing functions on data
         if transforms is not None:
-             img = transforms(img)
+            img = transforms(img)
+            
         return img, label
 
     def create_dataset(
@@ -162,12 +165,16 @@ class S3(L.LightningWork):
             def __init__(self, bucket, transforms=None, split=split):
                 self.transforms = transforms
                 # Check that the bucket exists, if not raise a warning
-                self.data = [obj for obj in resource.Bucket(bucket).objects.all() if obj.key.split('/')[1].lower() == split.lower()]
-
+                self.data = [
+                    obj for obj in resource.Bucket(bucket).objects.all() if 'labels-mapping.json' not in obj.key and obj.key.split('/')[1].lower() == split.lower()]
+                json_bytes = resource.meta.client.get_object(Bucket=bucket, Key='labels-mapping.json')['Body'].read()
+                my_json = json_bytes.decode('utf8').replace("'", '"')
+                self.label_map = json.loads(my_json)
+                 
             def __len__(self):
                 return len(self.data)
 
             def __getitem__(self, idx):
-                return get_s3_items(self.data, idx, self.transforms)
+                return get_s3_items(self.data, idx, self.transforms, self.label_map)
 
         return S3Dataset(bucket, transforms)
