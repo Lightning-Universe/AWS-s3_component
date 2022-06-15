@@ -140,12 +140,14 @@ class S3(L.LightningWork):
             self._upload_file(*args, **kwargs)
 
     def get_s3_items(data, idx):
-        filepath = data[idx]
-        img = Image.open(filepath).convert('RGB')
+        obj = data[idx]
+        label = obj.key.split('/')[-2]
+        img_bytes = obj.get()['Body'].read()
+        img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
         # Apply preprocessing functions on data
         if self.transform is not None:
              img = self.transform(img)
-        return img
+        return img, label
 
     def create_dataset(
         self,
@@ -159,7 +161,7 @@ class S3(L.LightningWork):
                 self.transform = transform
                 # Check that the bucket exists, if not raise a warning
                 self.data = [
-                    _obj.key for _obj in resource.Bucket(bucket).objects.all()
+                    obj for obj in resource.Bucket(bucket).objects.all()
                 ]
 
             def __len__(self):
