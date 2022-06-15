@@ -160,7 +160,7 @@ class S3(L.LightningWork):
         resource=self.resource
         class S3Dataset(Dataset):
             def __init__(self, bucket, transforms=None, split=split):
-                self.transform = transform
+                self.transforms = transforms
                 # Check that the bucket exists, if not raise a warning
                 self.data = [obj for obj in resource.Bucket(bucket).objects.all() if obj.key.split('/')[1].lower() == split.lower()]
 
@@ -170,4 +170,4 @@ class S3(L.LightningWork):
             def __getitem__(self, idx):
                 return get_s3_items(self.data, idx, self.transform)
 
-        return S3Dataset(bucket, transform)
+        return S3Dataset(bucket, transforms)
