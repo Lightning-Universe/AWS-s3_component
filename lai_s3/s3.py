@@ -146,8 +146,8 @@ class S3(L.LightningWork):
         img_bytes = obj.get()['Body'].read()
         img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
         # Apply preprocessing functions on data
-        if transform is not None:
-             img = self.transform(img)
+        if transforms is not None:
+             img = self.transforms(img)
         return img, label
 
     def create_dataset(
@@ -168,6 +168,6 @@ class S3(L.LightningWork):
                 return len(self.data)
 
             def __getitem__(self, idx):
-                return get_s3_items(self.data, idx, self.transform)
+                return get_s3_items(self.data, idx, self.transforms)
 
         return S3Dataset(bucket, transforms)
