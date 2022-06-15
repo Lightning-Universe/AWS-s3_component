@@ -3,7 +3,7 @@ import lightning as L
 from lightning.storage.payload import Payload
 import boto3
 import logging
-from typing import final, Union, Optional
+from typing import Union, Optional
 
 
 class S3(L.LightningWork):
@@ -59,7 +59,6 @@ class S3(L.LightningWork):
     def get_filelist(self, bucket, *args, **kwargs) -> None:
         self.run(action="get_filelist", bucket=bucket, *args, **kwargs)
 
-    @final
     def _get_filelist(self, bucket) -> None:
 
         # Check that the bucket exists, if not raise a warning
@@ -86,7 +85,6 @@ class S3(L.LightningWork):
             **kwargs
         )
 
-    @final
     def _download_file(
          self, bucket: str, object: str, filename: Union[L.storage.Path, str]
     ):
@@ -112,7 +110,6 @@ class S3(L.LightningWork):
             **kwargs
         )
 
-    @final
     def _upload_file(
             self,
             bucket: str,
