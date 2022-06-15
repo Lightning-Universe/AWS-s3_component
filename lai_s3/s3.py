@@ -158,12 +158,11 @@ class S3(L.LightningWork):
     ):
         resource=self.resource
         class S3Dataset(Dataset):
-            def __init__(self, bucket, transform=None):
+            def __init__(self, bucket, transform=None, split='train'):
                 self.transform = transform
                 # Check that the bucket exists, if not raise a warning
-                self.data = [
-                    obj for obj in resource.Bucket(bucket).objects.all()
-                ]
+                self.data = []
+                [obj for obj in resource.Bucket(bucket).all() if obj.key()[-2].lower() == split.lower()]
 
             def __len__(self):
                 return len(self.data)
