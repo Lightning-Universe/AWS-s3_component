@@ -6,6 +6,7 @@ import logging
 from typing import final, Union, Optional
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
+import io
 
 
 class S3(L.LightningWork):
