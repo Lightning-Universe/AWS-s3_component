@@ -144,7 +144,7 @@ class S3(L.LightningWork):
         obj = data[idx]
         label = obj.key.split('/')[-2]
         img_bytes = obj.get()['Body'].read()
-        img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+        img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
         # Apply preprocessing functions on data
         if self.transform is not None:
              img = self.transform(img)
