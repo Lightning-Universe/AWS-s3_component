@@ -4,12 +4,11 @@ from typing import Optional, Union
 import boto3
 import botocore.exceptions
 import lightning as L
-from lightning.storage.payload import Payload
 
 
 class S3(L.LightningWork):
-    def __init__(self, aws_access_key_id, aws_secret_access_key, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+    def __init__(self, aws_access_key_id, aws_secret_access_key):
+        super().__init__()
 
         self.data = {}  # Bucket name / bucket contents
         self.aws_access_key_id = aws_access_key_id
@@ -18,10 +17,9 @@ class S3(L.LightningWork):
 
     def verify_credentials(self):
 
-        if (
-            sum([self.aws_access_key_id is None, self.aws_secret_access_key is None])
-            == 1
-        ):
+        credentials = [self.aws_access_key_id, self.aws_secret_access_key]
+
+        if sum(cred is None for cred in credentials) == 1:
             missing_key = (
                 "aws_access_key_id"
                 if self.aws_secret_access_key
@@ -59,7 +57,7 @@ class S3(L.LightningWork):
     def _get_filelist(self, bucket) -> None:
 
         # Check that the bucket exists, if not raise a warning
-        content = [_obj.key for _obj in self.resource.Bucket(bucket).objects.all()]
+        content = [_o.key for _o in self.resource.Bucket(bucket).objects.all()]
         self.data = {**{bucket: content}, **self.data}
 
     def download_file(
