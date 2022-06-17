@@ -7,7 +7,7 @@ import lightning as L
 
 
 class S3(L.LightningWork):
-    def __init__(self, aws_access_key_id, aws_secret_access_key):
+    def __init__(self, aws_access_key_id=None, aws_secret_access_key=None):
         super().__init__()
 
         self.data = {}  # Bucket name / bucket contents
