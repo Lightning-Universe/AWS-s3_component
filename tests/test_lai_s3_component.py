@@ -5,6 +5,7 @@ To test a lightning component:
 2. call .run()
 """
 import os
+import pathlib
 import unittest
 from unittest.mock import patch
 
