@@ -1,6 +1,6 @@
-from lai_s3 import TemplateComponent
-
 import lightning as L
+
+from lai_s3 import TemplateComponent
 
 
 class LitApp(L.LightningFlow):
@@ -9,7 +9,9 @@ class LitApp(L.LightningFlow):
         self.lai_s3 = TemplateComponent()
 
     def run(self):
-        print("this is a simple Lightning app to verify your component is working as expected")
+        print(
+            "this is a simple Lightning app to verify your component is working as expected"
+        )
         self.lai_s3.run()
 
 

@@ -1,34 +1,32 @@
+import logging
+from typing import Optional, Union
+
+import boto3
 import botocore.exceptions
 import lightning as L
 from lightning.storage.payload import Payload
-import boto3
-import logging
-from typing import Union, Optional
 
 
 class S3(L.LightningWork):
-
-    def __init__(
-            self,
-            aws_access_key_id,
-            aws_secret_access_key,
-            *args, **kwargs
-    ):
+    def __init__(self, aws_access_key_id, aws_secret_access_key, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
-        self.data = {} # Bucket name / bucket contents
+        self.data = {}  # Bucket name / bucket contents
         self.aws_access_key_id = aws_access_key_id
         self.aws_secret_access_key = aws_secret_access_key
         self.verify_credentials()
 
     def verify_credentials(self):
 
-        if sum([
-                self.aws_access_key_id is None,
-                self.aws_secret_access_key is None
-        ]) == 1:
-            missing_key = 'aws_access_key_id' if self.aws_secret_access_key \
-                else 'aws_secret_access_key'
+        if (
+            sum([self.aws_access_key_id is None, self.aws_secret_access_key is None])
+            == 1
+        ):
+            missing_key = (
+                "aws_access_key_id"
+                if self.aws_secret_access_key
+                else "aws_secret_access_key"
+            )
             raise PermissionError(
                 "If either the aws_access_key_id or aws_secret_access_key is"
                 " provided then both are required."
@@ -44,12 +42,11 @@ class S3(L.LightningWork):
         except botocore.exceptions.ClientError as error:
             logging.error(error)
 
-
     @property
     def _session(self):
         return boto3.session.Session(
             aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_key
+            aws_secret_access_key=self.aws_secret_access_key,
         )
 
     @property
@@ -62,18 +59,16 @@ class S3(L.LightningWork):
     def _get_filelist(self, bucket) -> None:
 
         # Check that the bucket exists, if not raise a warning
-        content = [
-            _obj.key for _obj in self.resource.Bucket(bucket).objects.all()
-        ]
+        content = [_obj.key for _obj in self.resource.Bucket(bucket).objects.all()]
         self.data = {**{bucket: content}, **self.data}
 
     def download_file(
-            self,
-            bucket: str,
-            object: str,
-            filename: Union[L.storage.Path, str],
-            *args,
-            **kwargs
+        self,
+        bucket: str,
+        object: str,
+        filename: Union[L.storage.Path, str],
+        *args,
+        **kwargs,
     ) -> None:
 
         self.run(
@@ -82,11 +77,11 @@ class S3(L.LightningWork):
             object=object,
             filename=filename,
             *args,
-            **kwargs
+            **kwargs,
         )
 
     def _download_file(
-         self, bucket: str, object: str, filename: Union[L.storage.Path, str]
+        self, bucket: str, object: str, filename: Union[L.storage.Path, str]
     ):
         with open(filename, "wb") as _file:
             self.resource.meta.client.download_fileobj(
@@ -94,12 +89,12 @@ class S3(L.LightningWork):
             )
 
     def upload_file(
-            self,
-            bucket: str,
-            filename: Union[L.storage.Path, str],
-            object: Optional[str] = None,
-            *args,
-            **kwargs
+        self,
+        bucket: str,
+        filename: Union[L.storage.Path, str],
+        object: Optional[str] = None,
+        *args,
+        **kwargs,
     ):
         self.run(
             action="upload_file",
@@ -107,16 +102,13 @@ class S3(L.LightningWork):
             object=object,
             filename=filename,
             *args,
-            **kwargs
+            **kwargs,
         )
 
     def _upload_file(
-            self,
-            bucket: str,
-            object: str,
-            filename: Union[L.storage.Path, str]
+        self, bucket: str, object: str, filename: Union[L.storage.Path, str]
     ):
-        with open(filename, 'rb') as _f:
+        with open(filename, "rb") as _f:
             self.resource.meta.client.upload_fileobj(
                 Fileobj=_f, Bucket=bucket, Key=object
             )

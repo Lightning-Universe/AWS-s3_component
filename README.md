@@ -29,7 +29,7 @@ class LitApp(L.LightningFlow):
         self.s3.list_files(<BUCKET_NAME>)
         # Print the file
         self.s3.data
-        
+
         self.s3
 
 
