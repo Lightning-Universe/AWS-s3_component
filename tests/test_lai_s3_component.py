@@ -7,17 +7,16 @@ To test a lightning component:
 import os
 import unittest
 from unittest.mock import patch
-import pathlib
 
-import botocore
 import boto3
+import botocore
 import lightning as L
 from lightning.storage.path import Path
+
 from lai_s3.s3 import S3
 
 
 class MockSession:
-
     def __init__(self, aws_access_key_id, aws_secret_access_key):
         self.aws_secret_access_key = aws_access_key_id
         self.aws_secret_access_key = aws_secret_access_key
@@ -28,17 +27,15 @@ class MockSession:
     def resource(self, service):
         return MockResource(service)
 
-class Object:
 
+class Object:
     def __init__(self, key):
         self.key = key
 
-class MockObjects():
 
+class MockObjects:
     def all(self):
-        return [
-            Object("foo"), Object("bar")
-        ]
+        return [Object("foo"), Object("bar")]
 
 
 class MockBucket:
@@ -48,7 +45,6 @@ class MockBucket:
 
 
 class MockClient:
-
     def __init__(self, service):
         self.service = service
 
@@ -66,12 +62,12 @@ class MockClient:
 
 class MockMeta:
     client = MockClient
+
     def service_model(self):
         pass
 
 
 class MockResource:
-
     def __init__(self, service):
         self.service = service
         self.meta = MockMeta
@@ -81,12 +77,11 @@ class MockResource:
 
 
 class TestCredentials(unittest.TestCase):
-
     def test_missing_access_key_id(self):
         aws_access_key_id = None
         aws_secret_access_key = "foo"
         with patch.object(
-                boto3.session.Session, "client", return_value=MockClient("sts")
+            boto3.session.Session, "client", return_value=MockClient("sts")
         ) as _:
             self.assertRaises(
                 PermissionError, S3, aws_access_key_id, aws_secret_access_key
@@ -96,33 +91,30 @@ class TestCredentials(unittest.TestCase):
         aws_access_key_id = "foo"
         aws_secret_access_key = None
         with patch.object(
-                boto3.session.Session, "client", return_value=MockClient("sts")
+            boto3.session.Session, "client", return_value=MockClient("sts")
         ) as _:
             self.assertRaises(
                 PermissionError, S3, aws_access_key_id, aws_secret_access_key
             )
 
-class MockS3(S3):
 
+class MockS3(S3):
     def __init__(self, *args, **kwargs):
         with patch.object(
-                boto3.session, "Session",
-                return_value=MockSession("_id", "_key")
+            boto3.session, "Session", return_value=MockSession("_id", "_key")
         ):
             super().__init__(*args, **kwargs)
 
     def run(self, *args, **kwargs):
         with patch.object(
             boto3.session, "Session", return_value=MockSession("_id", "_key")
-        ) as _, \
-        patch.object(
+        ) as _, patch.object(
             boto3.session.Session, "client", return_value=MockClient("sts")
-        ) as _ :
+        ) as _:
             super().run(*args, **kwargs)
 
 
 class S3Interface(L.LightningFlow):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -137,7 +129,6 @@ class S3Interface(L.LightningFlow):
         self.uploaded_object = "dead3.jpg"
         self.object_to_download = "dead.jpg"
 
-
     def run(self):
 
         if self.passed_list is False:
@@ -147,7 +138,7 @@ class S3Interface(L.LightningFlow):
             self.s3.download_file(
                 bucket="lightningapps",
                 object=self.object_to_download,
-                filename=self.local_file
+                filename=self.local_file,
             )
             myfile = Path(self.local_file)
             myfile.touch()
@@ -159,7 +150,7 @@ class S3Interface(L.LightningFlow):
         # Test cases:
         if self.passed_list is False:
             assert self.s3.data.__len__() > 0
-            assert self.s3.data == {'lightningapps': ['foo', 'bar']}
+            assert self.s3.data == {"lightningapps": ["foo", "bar"]}
             self.passed_list = True
             return
         elif self.passed_download is False:
@@ -167,11 +158,11 @@ class S3Interface(L.LightningFlow):
             os.remove(self.local_file)
             self.passed_download = True
 
-        assert self.passed_download is True and \
-               self.passed_list is True
+        assert self.passed_download is True and self.passed_list is True
 
         # Exit when all tests finished
         self._exit()
+
 
 def test_insert_from_app():
     app = L.LightningApp(S3Interface(), debug=True)
