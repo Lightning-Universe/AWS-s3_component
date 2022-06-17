@@ -19,7 +19,7 @@ from lai_s3.s3 import S3
 class MockSession:
 
     def __init__(self, aws_access_key_id, aws_secret_access_key):
-        self.aws_secret_access_key = aws_secret_access_key
+        self.aws_secret_access_key = aws_access_key_id
         self.aws_secret_access_key = aws_secret_access_key
 
     def client(self, service):
@@ -40,6 +40,7 @@ class MockObjects():
             Object("foo"), Object("bar")
         ]
 
+
 class MockBucket:
     def __init__(self, bucket):
         self.bucket = bucket
@@ -53,9 +54,7 @@ class MockClient:
 
     def get_caller_identity(self):
         if self.service == "sts":
-            raise botocore.exceptions.ClientError(
-                {"Erroc": "fake error"}, "error"
-            )
+            raise botocore.exceptions.ClientError({}, {})
 
     @property
     def meta(self):
@@ -64,10 +63,12 @@ class MockClient:
     def download_fileobj(Bucket, Key, Fileobj):
         Fileobj.write(b"hello")
 
+
 class MockMeta:
     client = MockClient
     def service_model(self):
         pass
+
 
 class MockResource:
 
@@ -77,7 +78,6 @@ class MockResource:
 
     def Bucket(self, bucket):
         return MockBucket(bucket)
-
 
 
 class TestCredentials(unittest.TestCase):
@@ -104,6 +104,13 @@ class TestCredentials(unittest.TestCase):
 
 class MockS3(S3):
 
+    def __init__(self, *args, **kwargs):
+        with patch.object(
+                boto3.session, "Session",
+                return_value=MockSession("_id", "_key")
+        ):
+            super().__init__(*args, **kwargs)
+
     def run(self, *args, **kwargs):
         with patch.object(
             boto3.session, "Session", return_value=MockSession("_id", "_key")
@@ -121,8 +128,8 @@ class S3Interface(L.LightningFlow):
 
         aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
         aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-
         self.s3 = MockS3(aws_access_key_id, aws_secret_access_key)
+
         self.passed_list = False
         self.passed_download = False
 
