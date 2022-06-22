@@ -8,7 +8,7 @@ from pl_bolts.transforms.dataset_normalizations import cifar10_normalization
 from pytorch_lightning import Trainer,  seed_everything
 from pytorch_lightning.callbacks import LearningRateMonitor
 from pytorch_lightning.loggers import TensorBoardLogger
-from model import create_model, LitResnet
+from model import create_model, LitResnet, BATCH_SIZE, AVAIL_GPUS
 
 
 seed_everything(7)
