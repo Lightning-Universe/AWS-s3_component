@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torchvision
 from torchmetrics.functional import accuracy
 from torch.optim.lr_scheduler import OneCycleLR
-from pytorch_lightning import LightningModule, Trainer, seed_everything
+from pytorch_lightning import LightningModule, Trainer
 
 def create_model():
     model = torchvision.models.resnet18(pretrained=False, num_classes=10)
