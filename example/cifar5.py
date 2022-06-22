@@ -1,27 +1,11 @@
-import os
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from typing import Optional
+from lai_s3 import S3
 import torchvision
 import pytorch_lightning as pl
-from pl_bolts.datamodules import CIFAR10DataModule
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization
-from pytorch_lightning import LightningModule, Trainer, seed_everything
 from pytorch_lightning.callbacks import LearningRateMonitor
 from pytorch_lightning.loggers import TensorBoardLogger
-from torch.optim.lr_scheduler import OneCycleLR
-from torch.optim.swa_utils import AveragedModel, update_bn
-from torchmetrics.functional import accuracy
-from torchvision import transforms
-
-
-seed_everything(7)
-
-PATH_DATASETS = os.environ.get("PATH_DATASETS", ".")
-AVAIL_GPUS = min(1, torch.cuda.device_count())
-BATCH_SIZE = 256 if AVAIL_GPUS else 64
-NUM_WORKERS = int(os.cpu_count() / 2)
+from model import create_model, LitResnet
 
 
 train_transforms = torchvision.transforms.Compose(
@@ -40,6 +24,7 @@ test_transforms = torchvision.transforms.Compose(
     ]
 )
 
+
 class CifarDataModule(pl.LightningDataModule):
     def __init__(self, bucket, aws_access_key_id, aws_secret_access_key, aws_session_token, transforms=None, batch_size: int = 32):
         super().__init__()
@@ -51,11 +36,11 @@ class CifarDataModule(pl.LightningDataModule):
             aws_session_token=aws_session_token
         )
         self.transforms = transforms
-        
+
 
     def setup(self, stage: Optional[str] = None):
-        self.test = self.s3.create_dataset(bucket=self.bucket, split='test', transforms=self.transforms)
-        self.train = self.s3.create_dataset(bucket=self.bucket, split='train', transforms=self.transforms)
+        self.test = self.s3.run(action='create_dataset', bucket=self.bucket, split='test', transforms=self.transforms)
+        self.train = self.s3.run(action='create_dataset', bucket=self.bucket, split='train', transforms=self.transforms)
 
     def train_dataloader(self):
         return DataLoader(self.train, batch_size=self.batch_size)
@@ -69,10 +54,10 @@ class CifarDataModule(pl.LightningDataModule):
     def teardown(self, stage: Optional[str] = None):
         # Used to clean-up when the run is finished
         pass
-        
+
 
 cifar10_dm = CifarDataModule(
-    bucket=bucket, 
+    bucket="",
     aws_access_key_id="",
     aws_secret_access_key="",
     aws_session_token="",
