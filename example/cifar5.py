@@ -14,7 +14,7 @@ from torch.optim.lr_scheduler import OneCycleLR
 from torch.optim.swa_utils import AveragedModel, update_bn
 from torchmetrics.functional import accuracy
 from torchvision import transforms
-
+from lai_s3 import S3
 
 seed_everything(7)
 
