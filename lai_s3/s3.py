@@ -150,12 +150,12 @@ class S3(L.LightningWork):
             label = label_map[label]
             img_bytes = obj.get()['Body'].read()
             img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
-            out = (img, label)
+            out = [img, label]
         elif data_type.lower() == 'tabular':
             columns = data.columns
             features = data.loc[idx, columns[0:-1]].values
             label = df.at[idx, columns[-1]]
-            out = (features, label)
+            out = [features, label]
         else:
             raise("This component only supports an img or tabular data_type")
 
