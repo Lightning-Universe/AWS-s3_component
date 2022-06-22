@@ -1,4 +1,5 @@
 import os
+import torch
 from typing import Optional
 from lai_s3 import S3
 import torchvision
