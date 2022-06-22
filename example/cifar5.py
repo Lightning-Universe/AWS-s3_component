@@ -76,7 +76,7 @@ model.datamodule = cifar10_dm
 
 trainer = Trainer(
     progress_bar_refresh_rate=10,
-    max_epochs=30,
+    max_epochs=3,
     gpus=AVAIL_GPUS,
     logger=TensorBoardLogger("lightning_logs/", name="resnet"),
     callbacks=[LearningRateMonitor(logging_interval="step")],
