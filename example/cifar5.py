@@ -1,11 +1,11 @@
 import os
-import torch
 from typing import Optional
 from lai_s3 import S3
 import torchvision
+from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pl_bolts.transforms.dataset_normalizations import cifar10_normalization
-from pytorch_lightning import Trainer,  seed_everything
+from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import LearningRateMonitor
 from pytorch_lightning.loggers import TensorBoardLogger
 from model import create_model, LitResnet, BATCH_SIZE, AVAIL_GPUS
