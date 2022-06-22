@@ -1,5 +1,3 @@
-import os
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,25 +6,12 @@ from torchmetrics.functional import accuracy
 from torch.optim.lr_scheduler import OneCycleLR
 from pytorch_lightning import LightningModule, Trainer, seed_everything
 
-seed_everything(7)
-
-PATH_DATASETS = os.environ.get("PATH_DATASETS", ".")
-AVAIL_GPUS = min(1, torch.cuda.device_count())
-BATCH_SIZE = 256 if AVAIL_GPUS else 64
-NUM_WORKERS = int(os.cpu_count() / 2)
-
 def create_model():
     model = torchvision.models.resnet18(pretrained=False, num_classes=10)
     model.conv1 = nn.Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
     model.maxpool = nn.Identity()
     return model
 
-seed_everything(7)
-
-PATH_DATASETS = os.environ.get("PATH_DATASETS", ".")
-AVAIL_GPUS = min(1, torch.cuda.device_count())
-BATCH_SIZE = 256 if AVAIL_GPUS else 64
-NUM_WORKERS = int(os.cpu_count() / 2)
 class LitResnet(LightningModule):
     def __init__(self, lr=0.05):
         super().__init__()
