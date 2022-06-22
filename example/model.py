@@ -6,6 +6,9 @@ from torchmetrics.functional import accuracy
 from torch.optim.lr_scheduler import OneCycleLR
 from pytorch_lightning import LightningModule, Trainer
 
+AVAIL_GPUS = min(1, torch.cuda.device_count())
+BATCH_SIZE = 256 if AVAIL_GPUS else 64
+
 def create_model():
     model = torchvision.models.resnet18(pretrained=False, num_classes=10)
     model.conv1 = nn.Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
