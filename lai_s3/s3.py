@@ -143,7 +143,7 @@ class S3(L.LightningWork):
             return self._create_dataset(*args, **kwargs)
 
 
-    def _get_s3_items(data, idx, transforms=None, data_type='img', label_map=None):
+    def __getitem__override(data, idx, transforms=None, data_type='img', label_map=None):
         if data_type.lower() == 'img':
             obj = data[idx]
             label = obj.key.split('/')[-2]
@@ -163,7 +163,42 @@ class S3(L.LightningWork):
         if transforms is not None:
             out[0] = transforms(out[0])
         return out
-
+    
+    def create_dataset(
+        self,
+        bucket,
+        data_type='img',
+        label_map='labels-mapping.json',
+        transforms=None,
+        __getitem__override=__getitem__override,
+        split='train'
+    ):
+        '''
+        The create_dataset is a helper function used to create a custom torch dataset capable of loading 
+        data from a private S3 bucket. By default it has strict expectations for the directory organization 
+        and the image type. It expects the data to be image type and for the directory structure to be something
+        aking to:
+        
+        train\
+            class 1\
+                imgs
+                ...
+            class 2\
+                imgs
+                ...
+        test\
+            ...
+        val\
+            ....
+        '''
+        self.run(
+            action='create_dataset',
+            bucket=bucket, 
+            data_type=data_type,
+            label_map='labels-mapping.json',
+            transforms=transforms,
+            __getitem__override=__getitem__override
+                 
     def _create_dataset(
         self,
         bucket,
@@ -177,10 +212,7 @@ class S3(L.LightningWork):
         class S3Dataset(Dataset):
             '''
             The S3Dataset class creates a custom Pytorch Dataset for you. Based on the current implementation the
-            __getitem__ method is overrideable by passing in that arguement to the Works run method call. It
-            also assumes the S3 bucket you are using only contains data that will be used for modeling. By default in
-            the image classification case it expects a labels-mapping.json to properly convert the image labels into torch tensors.
-            In the tabular case it only expects to receive loadable data files.
+            __getitem__ method is overrideable by passing in it in for __getitem__override in the create_dataset method.
             '''
             def __init__(self, bucket, transforms=None, split=split):
                 self.transforms = transforms
@@ -191,9 +223,12 @@ class S3(L.LightningWork):
 
                 # get label_map in default case
                 if label_map is not None:
-                    json_bytes = resource.meta.client.get_object(Bucket=bucket, Key=label_map)['Body'].read()
-                    my_json = json_bytes.decode('utf8').replace("'", '"')
-                    self.label_map = json.loads(my_json)
+                    try:
+                        json_bytes = resource.meta.client.get_object(Bucket=bucket, Key=label_map)['Body'].read()
+                        json_data = json_bytes.decode('utf8').replace("'", '"')
+                        self.label_map = json.loads(json_data)
+                    except json.JSONDecodeError:
+                        print("Error decoding json containing image mappings. Does your bucket contain one?")
                 else:
                     self.label_map = None
 
