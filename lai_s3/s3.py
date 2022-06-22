@@ -1,6 +1,6 @@
 import botocore.exceptions
 import lightning as L
-from lightning.storage.payload import Payload
+import lightning_app as lapp
 import boto3
 import logging
 from typing import final, Union, Optional
@@ -34,7 +34,7 @@ class S3(L.LightningWork):
         for cred in self.credentials:
             if self.credentials[cred] is None:
                 missing_creds += self.credentials[cred]
-        
+
         if missing_creds:
             raise PermissionError(
                 "If either the aws_access_key_id, aws_secret_access_key, or aws_session_token is"
@@ -80,7 +80,7 @@ class S3(L.LightningWork):
             self,
             bucket: str,
             object: str,
-            filename: Union[L.storage.Path, str],
+            filename: Union[lapp.storage.Path, str],
             *args,
             **kwargs
     ) -> None:
@@ -96,7 +96,7 @@ class S3(L.LightningWork):
 
     @final
     def _download_file(
-         self, bucket: str, object: str, filename: Union[L.storage.Path, str]
+         self, bucket: str, object: str, filename: Union[lapp.storage.Path, str]
     ):
         with open(filename, "wb") as _file:
             self.resource.meta.client.download_fileobj(
@@ -106,7 +106,7 @@ class S3(L.LightningWork):
     def upload_file(
             self,
             bucket: str,
-            filename: Union[L.storage.Path, str],
+            filename: Union[lapp.storage.Path, str],
             object: Optional[str] = None,
             *args,
             **kwargs
@@ -125,7 +125,7 @@ class S3(L.LightningWork):
             self,
             bucket: str,
             object: str,
-            filename: Union[L.storage.Path, str]
+            filename: Union[lapp.storage.Path, str]
     ):
         with open(filename, 'rb') as _f:
             self.resource.meta.client.upload_fileobj(
@@ -133,48 +133,74 @@ class S3(L.LightningWork):
             )
 
     def run(self, action, *args, **kwargs):
-
         if action == "get_filelist":
             self._get_filelist(*args, **kwargs)
         elif action == "download_file":
             self._download_file(*args, **kwargs)
         elif action == "upload_file":
             self._upload_file(*args, **kwargs)
+        elif action == 'create_dataset':
+            return self._create_dataset(*args, **kwargs)
 
-    def get_s3_items(data, idx, transforms, label_map):
-        obj = data[idx]
-        label = obj.key.split('/')[-2]
-        label = label_map[label]
-        img_bytes = obj.get()['Body'].read()
-        img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
+
+    def _get_s3_items(data, idx, transforms=None, data_type='img', label_map=None):
+        if data_type.lower() == 'img':
+            obj = data[idx]
+            label = obj.key.split('/')[-2]
+            label = label_map[label]
+            img_bytes = obj.get()['Body'].read()
+            img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
+            out = (img, label)
+        elif data_type.lower() == 'tabular':
+            columns = data.columns
+            features = data.loc[idx, columns[0:-1]].values
+            label = df.at[idx, columns[-1]]
+            out = (features, label)
+        else:
+            raise("This component only supports an img or tabular data_type")
+
         # Apply preprocessing functions on data
         if transforms is not None:
-            img = transforms(img)
-            
-        return img, label
+            out[0] = transforms(out[0])
+        return out
 
-    def create_dataset(
+    def _create_dataset(
         self,
         bucket,
+        data_type='img',
+        label_map='labels-mapping.json',
         transforms=None,
-        get_s3_items=get_s3_items,
+        _get_s3_items=_get_s3_items,
         split='train'
     ):
         resource=self.resource
         class S3Dataset(Dataset):
+            '''
+            The S3Dataset class creates a custom Pytorch Dataset for you. Based on the current implementation the
+            __getitem__ method is overrideable by passing in that arguement to the Works run method call. It
+            also assumes the S3 bucket you are using only contains data that will be used for modeling. By default in
+            the image classification case it expects a labels-mapping.json to properly convert the image labels into torch tensors.
+            In the tabular case it only expects to receive loadable data files.
+            '''
             def __init__(self, bucket, transforms=None, split=split):
                 self.transforms = transforms
                 # Check that the bucket exists, if not raise a warning
                 self.data = [
-                    obj for obj in resource.Bucket(bucket).objects.all() if 'labels-mapping.json' not in obj.key and obj.key.split('/')[1].lower() == split.lower()]
-                json_bytes = resource.meta.client.get_object(Bucket=bucket, Key='labels-mapping.json')['Body'].read()
-                my_json = json_bytes.decode('utf8').replace("'", '"')
-                self.label_map = json.loads(my_json)
-                 
+                    obj for obj in resource.Bucket(bucket).objects.all() if label_map not in obj.key and obj.key.split('/')[1].lower() == split.lower()
+                    ]
+
+                # get label_map in default case
+                if label_map is not None:
+                    json_bytes = resource.meta.client.get_object(Bucket=bucket, Key=label_map)['Body'].read()
+                    my_json = json_bytes.decode('utf8').replace("'", '"')
+                    self.label_map = json.loads(my_json)
+                else:
+                    self.label_map = None
+
             def __len__(self):
                 return len(self.data)
 
             def __getitem__(self, idx):
-                return get_s3_items(self.data, idx, self.transforms, self.label_map)
+                return _get_s3_items(data=self.data, idx=idx, transforms=self.transforms, label_map=self.label_map)
 
         return S3Dataset(bucket, transforms)
