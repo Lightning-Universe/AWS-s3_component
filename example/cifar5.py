@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 from lai_s3 import S3
 import torchvision
@@ -8,6 +9,11 @@ from pytorch_lightning.callbacks import LearningRateMonitor
 from pytorch_lightning.loggers import TensorBoardLogger
 from model import create_model, LitResnet
 
+
+seed_everything(7)
+AVAIL_GPUS = min(1, torch.cuda.device_count())
+BATCH_SIZE = 256 if AVAIL_GPUS else 64
+NUM_WORKERS = int(os.cpu_count() / 2)
 
 train_transforms = torchvision.transforms.Compose(
     [
