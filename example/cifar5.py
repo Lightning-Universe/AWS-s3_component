@@ -37,7 +37,7 @@ class CifarDataModule(pl.LightningDataModule):
     def __init__(self, bucket, aws_access_key_id, aws_secret_access_key, aws_session_token, transforms=None, batch_size: int = 32):
         super().__init__()
         self.batch_size = batch_size
-        self.bucket = 'femi-testing-privatess3'
+        self.bucket = bucket
         self.s3 = S3(
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
