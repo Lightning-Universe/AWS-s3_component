@@ -47,8 +47,8 @@ class CifarDataModule(pl.LightningDataModule):
 
 
     def setup(self, stage: Optional[str] = None):
-        self.test = self.s3.run(action='create_dataset', bucket=self.bucket, split='test', transforms=self.transforms)
-        self.train = self.s3.run(action='create_dataset', bucket=self.bucket, split='train', transforms=self.transforms)
+        self.test = self.s3.create_dataset(bucket=self.bucket, split='test', transforms=self.transforms)
+        self.train = self.s3.create_dataset(bucket=self.bucket, split='train', transforms=self.transforms)
 
     def train_dataloader(self):
         return DataLoader(self.train, batch_size=self.batch_size)
