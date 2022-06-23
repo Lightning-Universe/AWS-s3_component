@@ -30,20 +30,22 @@ class S3(L.LightningWork):
         self.verify_credentials()
 
     def verify_credentials(self):
-        missing_creds = []
-        for cred in self.credentials:
-            if self.credentials[cred] is None:
-                missing_creds += self.credentials[cred]
-
-        if missing_creds:
-            raise PermissionError(
-                "If either the aws_access_key_id, aws_secret_access_key, or aws_session_token is"
-                " provided then all credential fields are required."
-                f" Missing value for {missing_creds}"
-            )
-
-        elif not self.credentials['aws_access_key_id'] and not self.credentials['aws_secret_access_key']:
-            logging.info("Using default credentials from .aws")
+        if self.credentials['aws_session_token'] is None:
+            default = True
+            missing_creds = []
+            for key in credentials:
+                if credentials[key] is not None:
+                    defaults = False
+                    missing_creds.append(key)
+            if defaults:
+                logging.info("Using default credentials from .aws")
+            else:
+                raise PermissionError(
+                    "If the aws_session_token is not provided then the aws_access_key_id and aws_secret_access_key are required,"
+                    f" Missing value for {missing_creds}"
+                )
+        else:
+            logging.info("Using provided asws session token")
 
         # Verify that the access key pairs are valid
         try:
@@ -54,11 +56,16 @@ class S3(L.LightningWork):
 
     @property
     def _session(self):
-        return boto3.session.Session(
-            aws_access_key_id=self.credentials['aws_access_key_id'],
-            aws_secret_access_key=self.credentials['aws_secret_access_key'],
-            aws_session_token=self.credentials['aws_session_token']
-        )
+        print(self.credentials)
+        if self.credentials['aws_session_token'] is not None:
+            return boto3.session.Session(
+                aws_session_token=self.credentials['aws_session_token']
+            )
+        else:
+            return boto3.session.Session(
+                aws_access_key_id=self.credentials['aws_access_key_id'],
+                aws_secret_access_key=self.credentials['aws_secret_access_key']
+            )
 
     @property
     def resource(self):
