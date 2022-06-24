@@ -17,20 +17,25 @@ lightning install component https://github.com/theUser/lai_s3
 Once the app is installed, use it in an app:
 
 ```python
-from lai_s3 import TemplateComponent
 import lightning as L
+from lai_s3.s3 import S3
 
 
 class LitApp(L.LightningFlow):
     def __init__(self) -> None:
         super().__init__()
-        self.lai_s3 = TemplateComponent()
+        self.s3 = S3("YOUR AWS ACCESS KEY ID", "YOUR AWS SECRET ACCESS KEY")
 
     def run(self):
-        print(
-            "this is a simple Lightning app to verify your component is working as expected"
+        # Download file
+        self.s3.download_file(
+            bucket="YOUR BUCKET NAME", object="REMOTE 'PATH' TO FILE", filename="NAME OF DOWNLOADED FILE"
         )
-        self.lai_s3.run()
+
+        # Retrieves "filenames" from a bucket and stores it in the `data` attr
+        self.s3.list_files("YOUR BUCKET NAME")
+        # Print the file
+        self.s3.data
 
 
 app = L.LightningApp(LitApp())
