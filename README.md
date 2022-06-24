@@ -1,20 +1,24 @@
-# lai_s3 component
+<!---:lai-name: BigQuery--->
 
-This ⚡ [Lightning component](lightning.ai) ⚡ was generated automatically with:
+<div align="center">
+<img src="static/s3-icon.svg" width="200px">
 
-```bash
-lightning init component lai_s3
+```
+A Lightning component to move files from and to Amazon S3.
+______________________________________________________________________
 ```
 
-## To run lai_s3
+![Tests](https://github.com/PyTorchLightning/LAI-bigquery/actions/workflows/ci-testing.yml/badge.svg)
 
-First, install lai_s3 (warning: this app has not been officially approved on the lightning gallery):
+</div>
 
-```bash
-lightning install component https://github.com/theUser/lai_s3
-```
+### About
 
-Once the app is installed, use it in an app:
+This component lets you upload and download files to Amazon S3.
+
+### Use the component
+
+To download a file or list files in a bucket
 
 ```python
 import lightning as L
@@ -35,8 +39,29 @@ class LitApp(L.LightningFlow):
         # Retrieves "filenames" from a bucket and stores it in the `data` attr
         self.s3.list_files("YOUR BUCKET NAME")
         # Print the file
-        self.s3.data
+        print(self.s3.data)
 
 
 app = L.LightningApp(LitApp())
+```
+
+### Install
+
+Run the following to install:
+
+```shell
+git clone https://github.com/PyTorchLightning/LAI-s3
+cd LAI-s3
+pip install -r requirements.txt
+pip install -e .
+```
+
+### Tests
+
+To run unit tests locally:
+
+```shell
+# From the root level of the package (LAI-bigquery)
+pip install -r tests/requirements.txt
+pytest
 ```
