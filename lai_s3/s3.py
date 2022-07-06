@@ -1,6 +1,6 @@
 import botocore.exceptions
 import lightning as L
-import lightning_app as lapp
+from lightning.app.storage import Path
 import boto3
 import logging
 from typing import final, Union, Optional
@@ -87,7 +87,7 @@ class S3(L.LightningWork):
             self,
             bucket: str,
             object: str,
-            filename: Union[lapp.storage.Path, str],
+            filename: Union[Path, str],
             *args,
             **kwargs
     ) -> None:
@@ -103,7 +103,7 @@ class S3(L.LightningWork):
 
     @final
     def _download_file(
-         self, bucket: str, object: str, filename: Union[lapp.storage.Path, str]
+         self, bucket: str, object: str, filename: Union[Path, str]
     ):
         with open(filename, "wb") as _file:
             self.resource.meta.client.download_fileobj(
@@ -113,7 +113,7 @@ class S3(L.LightningWork):
     def upload_file(
             self,
             bucket: str,
-            filename: Union[lapp.storage.Path, str],
+            filename: Union[Path, str],
             object: Optional[str] = None,
             *args,
             **kwargs
@@ -132,7 +132,7 @@ class S3(L.LightningWork):
             self,
             bucket: str,
             object: str,
-            filename: Union[lapp.storage.Path, str]
+            filename: Union[Path, str]
     ):
         with open(filename, 'rb') as _f:
             self.resource.meta.client.upload_fileobj(
