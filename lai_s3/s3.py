@@ -3,7 +3,7 @@ import lightning as L
 from lightning.app.storage import Path
 import boto3
 import logging
-from typing import final, Union, Optional
+from typing import final, Union, Optional, Any
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import io
@@ -150,7 +150,7 @@ class S3(L.LightningWork):
             return self._create_dataset(*args, **kwargs)
 
 
-    def __getitem__override(data, idx, transforms=None, data_type='img', label_map=None):
+    def __getitem__override(data: Any, idx: int, transforms Optional[Callable] = None, data_type: str = 'img', label_map: Optional[str] = None):
         if data_type.lower() == 'img':
             obj = data[idx]
             label = obj.key.split('/')[-2]
@@ -173,12 +173,12 @@ class S3(L.LightningWork):
     
     def create_dataset(
         self,
-        bucket,
-        data_type='img',
-        label_map='labels-mapping.json',
-        transforms=None,
-        __getitem__override=__getitem__override,
-        split='train'
+        bucket: str,
+        data_type: str = 'img',
+        label_map: str = 'labels-mapping.json',
+        transforms: Optional[Callable] = None,
+        __getitem__override: Callable = __getitem__override,
+        split: str = 'train'
     ):
         '''
         The create_dataset is a helper function used to create a custom torch dataset capable of loading 
@@ -208,12 +208,12 @@ class S3(L.LightningWork):
                  
     def _create_dataset(
         self,
-        bucket,
-        data_type='img',
-        label_map='labels-mapping.json',
-        transforms=None,
-        _get_s3_items=_get_s3_items,
-        split='train'
+        bucket: str,
+        data_type: str ='img',
+        label_map: str ='labels-mapping.json',
+        transforms: Optional[Callable] =None,
+        _get_s3_items: Callable = _get_s3_items,
+        split: str ='train'
     ):
         resource=self.resource
         class S3Dataset(Dataset):
