@@ -14,10 +14,11 @@ class S3(L.LightningWork):
 
     def __init__(
             self,
-            aws_access_key_id=None,
-            aws_secret_access_key=None,
-            aws_session_token=None,
-            *args, **kwargs
+            aws_access_key_id: str,
+            aws_secret_access_key: str,
+            aws_session_token: Optional[str] = None,
+            *args, 
+            **kwargs
     ):
         super().__init__(self, *args, **kwargs)
 
@@ -31,21 +32,26 @@ class S3(L.LightningWork):
 
     def verify_credentials(self):
         if self.credentials['aws_session_token'] is None:
-            default = True
-            missing_creds = []
-            for key in credentials:
-                if credentials[key] is not None:
-                    defaults = False
-                    missing_creds.append(key)
-            if defaults:
-                logging.info("Using default credentials from .aws")
-            else:
-                raise PermissionError(
-                    "If the aws_session_token is not provided then the aws_access_key_id and aws_secret_access_key are required,"
-                    f" Missing value for {missing_creds}"
-                )
+            logging.info("Not using temporary session token")
         else:
-            logging.info("Using provided asws session token")
+            logging.info("Using temporary session token")
+         
+        default = True
+        missing_creds = []
+        for key in credentials:
+            if key == 'aws_session_token':
+                continue
+            elif credentials[key] is not None:
+                defaults = False
+                missing_creds.append(key)
+        if defaults:
+            logging.info("Using default credentials from .aws")
+        else:
+            raise PermissionError(
+                f"""
+                Both the aws_access_key_id and aws_secret_access_key are required inputs.
+                It appears {missing_creds} was not provided"""
+            )
 
         # Verify that the access key pairs are valid
         try:
@@ -56,9 +62,10 @@ class S3(L.LightningWork):
 
     @property
     def _session(self):
-        print(self.credentials)
         if self.credentials['aws_session_token'] is not None:
             return boto3.session.Session(
+                aws_access_key_id=self.credentials['aws_access_key_id'],
+                aws_secret_access_key=self.credentials['aws_secret_access_key'],
                 aws_session_token=self.credentials['aws_session_token']
             )
         else:
