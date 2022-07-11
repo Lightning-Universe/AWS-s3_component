@@ -242,7 +242,7 @@ class S3(L.LightningWork):
                         json_data = json_bytes.decode('utf8').replace("'", '"')
                         self.label_map = json.loads(json_data)
                     except json.JSONDecodeError:
-                        print("Error decoding json containing image mappings. Does your bucket contain one?")
+                        logging.error("Error decoding json containing image mappings. Does your bucket contain one?")
                 else:
                     self.label_map = None
 
