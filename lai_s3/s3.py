@@ -16,7 +16,6 @@ class S3(L.LightningWork):
         self.verify_credentials()
 
     def verify_credentials(self):
-
         credentials = [self.aws_access_key_id, self.aws_secret_access_key]
 
         if sum(cred is None for cred in credentials) == 1:
@@ -55,7 +54,6 @@ class S3(L.LightningWork):
         self.run(action="get_filelist", bucket=bucket, *args, **kwargs)
 
     def _get_filelist(self, bucket) -> None:
-
         # Check that the bucket exists, if not raise a warning
         content = [_o.key for _o in self.resource.Bucket(bucket).objects.all()]
         self.data = {**{bucket: content}, **self.data}
@@ -112,7 +110,6 @@ class S3(L.LightningWork):
             )
 
     def run(self, action, *args, **kwargs):
-
         if action == "get_filelist":
             self._get_filelist(*args, **kwargs)
         elif action == "download_file":

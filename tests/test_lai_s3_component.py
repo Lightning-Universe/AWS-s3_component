@@ -1,5 +1,4 @@
-r"""
-To test a lightning component:
+r"""To test a lightning component:
 
 1. Init the component.
 2. call .run()
@@ -130,7 +129,6 @@ class S3Interface(L.LightningFlow):
         self.object_to_download = "dead.jpg"
 
     def run(self):
-
         if self.passed_list is False:
             self.s3.get_filelist("lightningapps")
 
