@@ -9,8 +9,9 @@ from unittest.mock import patch
 
 import boto3
 import botocore
-import lightning as L
-from lightning.storage.path import Path
+from lightning import LightningApp, LightningFlow
+from lightning.app import runners
+from lightning.app.storage.path import Path
 
 from lai_s3.s3 import S3
 
@@ -101,7 +102,7 @@ class MockS3(S3):
             super().run(*args, **kwargs)
 
 
-class S3Interface(L.LightningFlow):
+class S3Interface(LightningFlow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -151,5 +152,5 @@ class S3Interface(L.LightningFlow):
 
 
 def test_insert_from_app():
-    app = L.LightningApp(S3Interface(), debug=True)
-    L.runners.MultiProcessRuntime(app, start_server=False).dispatch()
+    app = LightningApp(S3Interface(), debug=True)
+    runners.MultiProcessRuntime(app, start_server=False).dispatch()
