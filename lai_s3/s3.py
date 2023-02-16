@@ -16,15 +16,10 @@ class S3(L.LightningWork):
         self.verify_credentials()
 
     def verify_credentials(self):
-
         credentials = [self.aws_access_key_id, self.aws_secret_access_key]
 
         if sum(cred is None for cred in credentials) == 1:
-            missing_key = (
-                "aws_access_key_id"
-                if self.aws_secret_access_key
-                else "aws_secret_access_key"
-            )
+            missing_key = "aws_access_key_id" if self.aws_secret_access_key else "aws_secret_access_key"
             raise PermissionError(
                 "If either the aws_access_key_id or aws_secret_access_key is"
                 " provided then both are required."
@@ -55,7 +50,6 @@ class S3(L.LightningWork):
         self.run(action="get_filelist", bucket=bucket, *args, **kwargs)
 
     def _get_filelist(self, bucket) -> None:
-
         # Check that the bucket exists, if not raise a warning
         content = [_o.key for _o in self.resource.Bucket(bucket).objects.all()]
         self.data = {**{bucket: content}, **self.data}
@@ -78,13 +72,9 @@ class S3(L.LightningWork):
             **kwargs,
         )
 
-    def _download_file(
-        self, bucket: str, object: str, filename: Union[L.storage.Path, str]
-    ):
+    def _download_file(self, bucket: str, object: str, filename: Union[L.storage.Path, str]):
         with open(filename, "wb") as _file:
-            self.resource.meta.client.download_fileobj(
-                Bucket=bucket, Key=object, Fileobj=_file
-            )
+            self.resource.meta.client.download_fileobj(Bucket=bucket, Key=object, Fileobj=_file)
 
     def upload_file(
         self,
@@ -103,16 +93,11 @@ class S3(L.LightningWork):
             **kwargs,
         )
 
-    def _upload_file(
-        self, bucket: str, object: str, filename: Union[L.storage.Path, str]
-    ):
+    def _upload_file(self, bucket: str, object: str, filename: Union[L.storage.Path, str]):
         with open(filename, "rb") as _f:
-            self.resource.meta.client.upload_fileobj(
-                Fileobj=_f, Bucket=bucket, Key=object
-            )
+            self.resource.meta.client.upload_fileobj(Fileobj=_f, Bucket=bucket, Key=object)
 
     def run(self, action, *args, **kwargs):
-
         if action == "get_filelist":
             self._get_filelist(*args, **kwargs)
         elif action == "download_file":

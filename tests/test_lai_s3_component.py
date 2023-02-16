@@ -1,5 +1,4 @@
-r"""
-To test a lightning component:
+r"""To test a lightning component:
 
 1. Init the component.
 2. call .run()
@@ -80,35 +79,23 @@ class TestCredentials(unittest.TestCase):
     def test_missing_access_key_id(self):
         aws_access_key_id = None
         aws_secret_access_key = "foo"
-        with patch.object(
-            boto3.session.Session, "client", return_value=MockClient("sts")
-        ) as _:
-            self.assertRaises(
-                PermissionError, S3, aws_access_key_id, aws_secret_access_key
-            )
+        with patch.object(boto3.session.Session, "client", return_value=MockClient("sts")) as _:
+            self.assertRaises(PermissionError, S3, aws_access_key_id, aws_secret_access_key)
 
     def test_missing_secret_access_key(self):
         aws_access_key_id = "foo"
         aws_secret_access_key = None
-        with patch.object(
-            boto3.session.Session, "client", return_value=MockClient("sts")
-        ) as _:
-            self.assertRaises(
-                PermissionError, S3, aws_access_key_id, aws_secret_access_key
-            )
+        with patch.object(boto3.session.Session, "client", return_value=MockClient("sts")) as _:
+            self.assertRaises(PermissionError, S3, aws_access_key_id, aws_secret_access_key)
 
 
 class MockS3(S3):
     def __init__(self, *args, **kwargs):
-        with patch.object(
-            boto3.session, "Session", return_value=MockSession("_id", "_key")
-        ):
+        with patch.object(boto3.session, "Session", return_value=MockSession("_id", "_key")):
             super().__init__(*args, **kwargs)
 
     def run(self, *args, **kwargs):
-        with patch.object(
-            boto3.session, "Session", return_value=MockSession("_id", "_key")
-        ) as _, patch.object(
+        with patch.object(boto3.session, "Session", return_value=MockSession("_id", "_key")) as _, patch.object(
             boto3.session.Session, "client", return_value=MockClient("sts")
         ) as _:
             super().run(*args, **kwargs)
@@ -130,7 +117,6 @@ class S3Interface(L.LightningFlow):
         self.object_to_download = "dead.jpg"
 
     def run(self):
-
         if self.passed_list is False:
             self.s3.get_filelist("lightningapps")
 
