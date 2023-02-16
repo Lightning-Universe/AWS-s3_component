@@ -152,5 +152,5 @@ class S3Interface(LightningFlow):
 
 
 def test_insert_from_app():
-    app = LightningApp(S3Interface(), debug=True)
+    app = LightningApp(S3Interface())
     runners.MultiProcessRuntime(app, start_server=False).dispatch()
