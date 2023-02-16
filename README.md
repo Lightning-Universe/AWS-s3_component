@@ -12,7 +12,9 @@ A Lightning component to move files from and to Amazon S3.
 ______________________________________________________________________
 ```
 
-![Tests](https://github.com/PyTorchLightning/LAI-bigquery/actions/workflows/ci-testing.yml/badge.svg)
+[![Lightning](https://img.shields.io/badge/-Lightning-792ee5?logo=pytorchlightning&logoColor=white)](https://lightning.ai)
+![license](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
+[![CI testing](https://github.com/Lightning-Universe/AWS-s3_component/actions/workflows/ci-testing.yml/badge.svg?event=push)](https://github.com/Lightning-Universe/AWS-s3_component/actions/workflows/ci-testing.yml)
 
 </div>
 
