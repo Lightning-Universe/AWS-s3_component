@@ -62,7 +62,6 @@ class S3(L.LightningWork):
         *args,
         **kwargs,
     ) -> None:
-
         self.run(
             action="download_file",
             bucket=bucket,
